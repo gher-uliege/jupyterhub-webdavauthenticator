@@ -1,0 +1,3 @@
+jupyterhub>=0.5
+requests
+webdavclient
