@@ -8,7 +8,7 @@ import os
 import subprocess
 
 from tornado import gen
-from traitlets import Dict, Unicode, List
+from traitlets import Unicode, List, Bool
 
 from jupyterhub.auth import Authenticator
 import webdav.client as wc
@@ -81,12 +81,15 @@ class WebDAVAuthenticator(Authenticator):
 
     custom_html = Unicode(
         "",
-        config=True)
+        config = True)
 
     allowed_webdav_servers = List(
         [WEBDAV_URL],
-        config=True)
+        config = True)
     
+    mount = Bool(
+        False,
+        config = True)
     
     @gen.coroutine
     def authenticate(self, handler, data):
@@ -125,11 +128,11 @@ class WebDAVAuthenticator(Authenticator):
                 return None
 
             userdir,userdir_owner_id,userdir_group_id = prep_dir(validuser)
-            
-            # # webdav
-            # if webdav_url != "" and webdav_username != "" and webdav_password != "" and webdav_mount != "":
-            #     webdav_fullmount = os.path.join(userdir,webdav_mount)
-            #     mount_webdav(webdav_username,webdav_password,userdir_owner_id,userdir_group_id,webdav_url,webdav_fullmount)
+
+            # webdav
+            if self.mount and webdav_url != "" and webdav_username != "" and webdav_password != "" and webdav_mount != "":
+                webdav_fullmount = os.path.join(userdir,webdav_mount)
+                mount_webdav(webdav_username,webdav_password,userdir_owner_id,userdir_group_id,webdav_url,webdav_fullmount)
 
         
         print("return dict",file=sys.stderr)
