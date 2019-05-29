@@ -37,3 +37,4 @@ Environment="JUPYTERHUB_CRYPT_KEY=copy_random_key_here"
 EOF
 ```
 
+The option `c.WebDAVAuthenticator.mount = True` also mounts the WebDAV resource so that it is visible inside the container.
