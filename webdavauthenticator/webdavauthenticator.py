@@ -33,6 +33,12 @@ def check_webdav(username,password,url):
         'webdav_password': password})
 
     success = client.check(purl.path)
+    # Workaround:
+    if not success:
+        res = requests.get(url, auth=(username, password))
+        if res.status_code == 200:
+            success = True
+    
     if success:
         print("credentials accepted for user",username,file=sys.stderr)
         return username
@@ -116,41 +122,36 @@ class WebDAVAuthenticator(Authenticator):
         webdav_password = data.get('webdav_password',password)
         webdav_mount = data.get('webdav_mount',"WebDAV")
 
-        print("URL2",webdav_url,file=sys.stderr)
+        print("WebDAV URL",webdav_url,file=sys.stderr)
 
         if webdav_url not in self.allowed_webdav_servers:
             print("only allow connections to ",self.allowed_webdav_servers,
                   " and not to ",webdav_url,file=sys.stderr)
             return None
 
-        #validuser = check_webdav(username,password,webdav_url)
+        validuser = check_webdav(username,password,webdav_url)
         # debugging
-        print("allowing using",username,file=sys.stderr)
-        validuser = username
+        #print("allowing using",username,file=sys.stderr)
+        #validuser = username
+
         print("validuser",username, validuser,file=sys.stderr)
         if validuser == username:
             # safty check
             if "/" in validuser:
                 return None
 
-            #userdir,userdir_owner_id,userdir_group_id = prep_dir(validuser)
-
             # webdav
             if not self.mount:
                 webdav_mount = ""
 
-            #if self.mount and webdav_url != "" and webdav_username != "" and webdav_password != "" and webdav_mount != "":
-            #    webdav_fullmount = os.path.join(userdir,webdav_mount)
-            #    mount_webdav(webdav_username,webdav_password,userdir_owner_id,userdir_group_id,webdav_url,webdav_fullmount)
-
-
-        print("return dict",file=sys.stderr)
-        return {"name": validuser, "auth_state": {
-            "webdav_password": webdav_password,
-            "webdav_username": webdav_username,
-            "webdav_url": webdav_url,
-            "webdav_mount": webdav_mount,
-        }}
+        print("return auth_state",file=sys.stderr)
+        return {"name": validuser,
+                "auth_state": {
+                    "webdav_password": webdav_password,
+                    "webdav_username": webdav_username,
+                    "webdav_url": webdav_url,
+                    "webdav_mount": webdav_mount,
+                }}
 
     @gen.coroutine
     def pre_spawn_start(self, user, spawner):
@@ -184,7 +185,7 @@ class WebDAVAuthenticator(Authenticator):
                          webdav_url,
                          webdav_fullmount)
 
-        print("setting env variable",user,file=sys.stderr)
+        print("setting env. variable",user,file=sys.stderr)
         #spawner.environment['WEBDAV_USERNAME'] = auth_state['webdav_username']
         spawner.environment['WEBDAV_USERNAME'] = user.name
         spawner.environment['WEBDAV_PASSWORD'] = webdav_password
