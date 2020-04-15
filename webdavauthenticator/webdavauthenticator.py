@@ -24,6 +24,21 @@ def mount_webdav(webdav_username,webdav_password,userdir_owner_id,userdir_group_
     p = subprocess.run(['mount.davfs','-o','uid=%d,gid=%d,username=%s' % (userdir_owner_id,userdir_group_id,webdav_username),webdav_url,webdav_fullmount],
                        stdout=subprocess.PIPE,input=webdav_password.encode("ascii"))
 
+
+def check_list(username,password,url):
+    USER_LIST = "/home/ubuntu/src/jupyterhub-webdavauthenticator/users.txt"
+    
+    users = {line.split()[0]:line.split()[1] for line in open(USER_LIST)}
+    if username in users:
+        if users[username] == password:
+            return username
+        else:
+            print("invalid password ",username,file=sys.stderr)
+    else:
+        print("invalid user ",username,file=sys.stderr)
+
+    return None
+    
 def check_webdav(username,password,url):
     purl = urlparse(url)
 
@@ -129,7 +144,9 @@ class WebDAVAuthenticator(Authenticator):
                   " and not to ",webdav_url,file=sys.stderr)
             return None
 
-        validuser = check_webdav(username,password,webdav_url)
+        #validuser = check_webdav(username,password,webdav_url)
+        validuser = check_list(username,password,webdav_url)
+        
         # debugging
         #print("allowing using",username,file=sys.stderr)
         #validuser = username
